@@ -26,6 +26,7 @@ class FLAIRDataset(Dataset):
         self.id_list = []
         with open(split_path, 'r') as fp:
             csv_reader = csv.reader(fp, delimiter=',')
+            header = next(csv_reader) #header separation
             for row in csv_reader:  
                 self.id_list.append( row) 
                 
@@ -92,11 +93,12 @@ class FLAIRDataset(Dataset):
         return torch.from_numpy (array).float().unsqueeze(0)
 
     def __getitem__(self, index):
-        img_id, msk_id = self.id_list[index]
-        rgb = self.read_img( self.data_dir + img_id )
-        mask =  self.read_msk( self.data_dir + msk_id)
-        sample = torch.cat((rgb,mask),axis=0)       
-        # rgb,tlm =[],[]
+        patch_id, img_id, msk_id, img_id2, msk_id2, img_id3, img_id4, img_id5, img_id6, img_id7, img_id8 = self.id_list[index]
+        rgb = self.read_img( self.data_dir + img_id2[3:] )
+        mask_cosia =  self.read_msk( self.data_dir + msk_id[3:])
+        #mask_lpis =  self.read_msk(self.data_dir + msk_id2) #choisir entre le masque lpis et cosIA
+        sample = torch.cat((rgb,mask_cosia),axis=0)       
+        rgb,tlm =[],[]
  
         sample = self.augm(sample)
         encoded_inputs = {
