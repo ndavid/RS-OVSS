@@ -22,6 +22,18 @@ def parse_args():
                         required=False,
                         default='debug',
                         type=str)
+    
+    parser.add_argument("--src_path",
+                        help="path to source directory",
+                        required=False,
+                        default=None,
+                        type=str)
+    
+    parser.add_argument("--data_path",
+                        help="path to data directory",
+                        required=False,
+                        default=None,
+                        type=str)
 
     args = parser.parse_args()
     return args 
@@ -248,5 +260,5 @@ class myEmbeddings(object):
         predictions = predictions.reshape(b,h,w) +1 
         
         return predictions
-    
+
 

@@ -285,12 +285,12 @@ def launch_training(cfg) -> None:
     global device    
     nbr_epochs = cfg.MAX_EPOCHS 
     date = datetime.now().strftime("%d-%m-%Y_%H-%M")
-    output_dir = cfg.RESULTS_PATH +'/' +cfg.NAME #+date
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-    cfg.output_dir = output_dir
+    output_dir = Path(cfg.RESULTS_PATH) / cfg.NAME
+    output_dir.mkdir(parents=True, exist_ok=True)
+    cfg.output_dir = str(output_dir)
     
     # save config to json file :
-    with open(  output_dir+"/cfg.json", "w") as file:
+    with open(output_dir / "cfg.json", "w") as file:
         json.dump(dict(cfg), file,indent =4)
 
     
@@ -305,7 +305,7 @@ def launch_training(cfg) -> None:
     # Model & Optimizer & Loss Set-up   
     model = u.load_model (model_type = cfg.MODEL_TYPE,
                           n_class =cfg.FLAIR.N_CLASS , 
-                          from_file = cfg.DIR_PATH +'output/' + cfg.MODEL_FROM_FILE,
+                          from_file = str(Path(cfg.DIR_PATH) / 'output' / cfg.MODEL_FROM_FILE),
                           freeze_encoder = cfg.FREEZE_ENCODER,
                           embedding_size = cfg.train.contrastive[0]['embedding_size'] if 'contrastive' in cfg.MODEL_TYPE else 0
                           )
@@ -319,8 +319,8 @@ def launch_training(cfg) -> None:
         contrastive_cfg = cfg.train.contrastive[0]
         contrastive_cfg['device']=device
         contrastive_cfg['n_class'] = cfg.FLAIR.N_CLASS   
-        contrastive_cfg['augmented_path'] = cfg.DIR_PATH + contrastive_cfg['augmented_path'] 
-        contrastive_cfg['embedding_path'] = cfg.DIR_PATH + contrastive_cfg['embedding_path'] 
+        contrastive_cfg['augmented_path'] = str(Path(cfg.DIR_PATH) / contrastive_cfg['augmented_path'])
+        contrastive_cfg['embedding_path'] = str(Path(cfg.DIR_PATH) / contrastive_cfg['embedding_path'])
         contrastive_cfg['device']
         criterion = WrapperBcosLossWAugm(**contrastive_cfg
                                     )
@@ -360,19 +360,19 @@ def launch_training(cfg) -> None:
         # Save model if best oacc :
         if  val_oacc> best_val_oacc  :
             best_val_oacc = val_oacc
-            u.save_module(model=model, path=Path (output_dir , "model"), mode="best_oacc")
+            u.save_module(model=model, path=output_dir / "model", mode="best_oacc")
 
         # Save model if best loss :
         if  val_loss < best_val_loss :
             best_val_loss = val_loss
-            u.save_module(model=model, path=Path (output_dir , "model"), mode="best")
-            u.save_module(model=optimizer, path=Path(output_dir ,"optim"), mode="best")
+            u.save_module(model=model, path=output_dir / "model", mode="best")
+            u.save_module(model=optimizer, path=output_dir / "optim", mode="best")
 
         progress_bar_epoch.update(1)
         progress_bar_epoch.set_postfix({"Total Val Loss": val_loss})
 
-        u.save_module(model=model, path=Path (output_dir,"model"), mode="last")
-        u.save_module(model=optimizer, path=Path(output_dir , "optim"), mode="last")
+        u.save_module(model=model, path=output_dir / "model", mode="last")
+        u.save_module(model=optimizer, path=output_dir / "optim", mode="last")
         
         
     print('-'*40,'END TRAINING',args.cfg,'-'*40) 
@@ -383,12 +383,12 @@ def config(cfg):
     global device    
     nbr_epochs = cfg.MAX_EPOCHS 
     date = datetime.now().strftime("%d-%m-%Y_%H-%M")
-    output_dir = cfg.RESULTS_PATH +'/' +cfg.NAME #+date
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-    cfg.output_dir = output_dir
+    output_dir = Path(cfg.RESULTS_PATH) / cfg.NAME
+    output_dir.mkdir(parents=True, exist_ok=True)
+    cfg.output_dir = str(output_dir)
     
     # save config to json file :
-    with open(  output_dir+"/cfg.json", "w") as file:
+    with open(output_dir / "cfg.json", "w") as file:
         json.dump(dict(cfg), file,indent =4)
 
     
@@ -403,7 +403,7 @@ def config(cfg):
     # Model & Optimizer & Loss Set-up   
     model = u.load_model (model_type = cfg.MODEL_TYPE,
                           n_class =cfg.FLAIR.N_CLASS , 
-                          from_file = cfg.DIR_PATH +'output/' + cfg.MODEL_FROM_FILE,
+                          from_file = str(Path(cfg.DIR_PATH) / 'output' / cfg.MODEL_FROM_FILE),
                           freeze_encoder = cfg.FREEZE_ENCODER,
                           embedding_size = cfg.train.contrastive[0]['embedding_size'] if 'contrastive' in cfg.MODEL_TYPE else 0
                           )
@@ -417,8 +417,8 @@ def config(cfg):
         contrastive_cfg = cfg.train.contrastive[0]
         contrastive_cfg['device']=device
         contrastive_cfg['n_class'] = cfg.FLAIR.N_CLASS   
-        contrastive_cfg['augmented_path'] = cfg.DIR_PATH + contrastive_cfg['augmented_path'] 
-        contrastive_cfg['embedding_path'] = cfg.DIR_PATH + contrastive_cfg['embedding_path'] 
+        contrastive_cfg['augmented_path'] = str(Path(cfg.DIR_PATH) / contrastive_cfg['augmented_path'])
+        contrastive_cfg['embedding_path'] = str(Path(cfg.DIR_PATH) / contrastive_cfg['embedding_path'])
         contrastive_cfg['device']
         criterion = WrapperBcosLossWAugm(**contrastive_cfg
                                     )
@@ -427,13 +427,12 @@ def config(cfg):
 if __name__ == '__main__':
     args = parse_args()    
     
-    cfg = get_cfg_defaults()  
-    cfg.merge_from_file(cfg.DIR_PATH + f'/config/{args.cfg}.yaml')
+    cfg = get_cfg_defaults(src_path=args.src_path, data_path=args.data_path)  
+    cfg.merge_from_file(str(Path(cfg.DIR_PATH) / 'config' / f'{args.cfg}.yaml'))
 
-            
     print('-'*40,'Launch experiment',args.cfg, '-'*40)
-    #launch_training(cfg)
-    config(cfg)
+    launch_training(cfg)
+    #config(cfg)
     run_test(cfg)
     run_test_on_TLM(cfg)
-    print('\n\n','*'*40,' SUCCESSFUL RUN FOR',args.cfg,'*'*40,'\n\n',) 
+    print('\n\n','*'*40,' SUCCESSFUL RUN FOR',args.cfg,'*'*40,'\n\n',)
