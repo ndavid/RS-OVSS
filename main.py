@@ -351,10 +351,11 @@ def launch_training(cfg) -> None:
 
 
         # Validation phase :
-        val_loss,val_oacc = val_epoch_step(model=model, 
-                                                dataloader=val_dataloader, 
-                                                criterion=criterion, 
-                                                epoch=epoch)
+        val_loss,val_oacc = val_epoch_step(
+            model=model, 
+            dataloader=val_dataloader, 
+            criterion=criterion, 
+            epoch=epoch)
 
             
         # Save model if best oacc :

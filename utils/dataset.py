@@ -4,6 +4,7 @@ import numpy as np
 from tifffile import tifffile
 from random import sample
 import csv
+from pathlib import Path
 import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as T
@@ -13,7 +14,7 @@ class FLAIRDataset(Dataset):
 
     def __init__(self, config, phase, reduced_to_13=True):
         
-        self.data_dir = config.FLAIR.DATA_DIR
+        self.data_dir = Path(config.FLAIR.DATA_DIR)
         self.means = [0.4394,0.4554,0.4257,0.,]
         self.stds = [0.1310,0.1215,0.1135,1.]
         self.phase = phase
@@ -93,8 +94,8 @@ class FLAIRDataset(Dataset):
 
     def __getitem__(self, index):
         img_id, msk_id = self.id_list[index]
-        rgb = self.read_img( self.data_dir + img_id )
-        mask =  self.read_msk( self.data_dir + msk_id)
+        rgb = self.read_img( self.data_dir / img_id )
+        mask =  self.read_msk( self.data_dir / msk_id)
         sample = torch.cat((rgb,mask),axis=0)       
         # rgb,tlm =[],[]
  

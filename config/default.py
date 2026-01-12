@@ -4,13 +4,12 @@ import os
 
 _C = CN()
 
-def init_general_config(src_path):
+def init_general_config(_C, src_path):
     """Initialize general configuration settings."""
     # Ensure src_path is a Path object
     if not isinstance(src_path, Path):
         src_path = Path(src_path)
     
-    _C = CN()
     _C.NAME = ''
     _C.DIR_PATH = str(src_path)
     _C.RESULTS_PATH = str(src_path / 'output')
@@ -25,7 +24,7 @@ def init_general_config(src_path):
     _C.output_dir = str(src_path / 'output')
 
 
-def init_flair_config(data_path, src_path):
+def init_flair_config(_C, data_path, src_path):
     """Initialize FLAIR dataset configuration."""
     # Ensure paths are Path objects
     if not isinstance(data_path, Path):
@@ -33,10 +32,10 @@ def init_flair_config(data_path, src_path):
     if not isinstance(src_path, Path):
         src_path = Path(src_path)
     
-    _C = CN()
+    _C.FLAIR = CN()
     _C.FLAIR.N_CLASS = 13
     _C.FLAIR.SPLIT = ''
-    _C.FLAIR.DATA_DIR = str(data_path / "flair_1" / "flair_aerial_train")
+    _C.FLAIR.DATA_DIR = str(data_path / "flair_aerial_train")
     _C.FLAIR.SPLIT_PATH = str(src_path / 'data' / 'flair_split')
     _C.FLAIR.TEST_SPLIT_PATH = str(src_path / 'data' / 'flair_split' / 'base' / 'test.csv')
     _C.FLAIR.PLOT_SPLIT_PATH = str(src_path / 'data' / 'flair_split' / 'base' / 'plot.csv')
@@ -50,7 +49,7 @@ def init_flair_config(data_path, src_path):
     }]
 
 
-def init_tlm_config(data_path, src_path):
+def init_tlm_config(_C, data_path, src_path):
     """Initialize TLM dataset configuration."""
     # Ensure paths are Path objects
     if not isinstance(data_path, Path):
@@ -58,7 +57,7 @@ def init_tlm_config(data_path, src_path):
     if not isinstance(src_path, Path):
         src_path = Path(src_path)
     
-    _C = CN()
+    _C.TLM = CN()
     _C.TLM.N_CLASS = 14
     _C.TLM.RGB_DIR = str(data_path / 'swisstopo' / 'SI_2020_50cm_100m')
     _C.TLM.LABEL_DIR = str(data_path / 'contrastive-lc' / 'tlm_14cls_100m')
@@ -74,12 +73,11 @@ def init_tlm_config(data_path, src_path):
     _C.TLM.DEBUG = False
 
 
-def init_training_config():
+def init_training_config(_C):
     """Initialize training configuration."""
-    _C = CN()
     _C.train = CN()
     _C.train.batch_size = 10
-    _C.train.num_workers = 16
+    _C.train.num_workers = 8
     _C.train.optimizer_type = 'adamw'
     _C.train.scheduler_type = 'polynomial'
     _C.train.lr = 6e-5
@@ -127,10 +125,11 @@ def get_cfg_defaults(src_path=None, data_path=None):
             data_path = Path(data_path)
     
     # Initialize configuration with subconfigs
-    init_general_config(src_path)
-    init_flair_config(data_path, src_path)
-    init_tlm_config(data_path, src_path)
-    init_training_config()
+    _C = CN()
+    init_general_config(_C, src_path)
+    init_flair_config(_C, data_path, src_path)
+    init_tlm_config(_C, data_path, src_path)
+    init_training_config(_C)
     
     # Return a clone so that the defaults will not be altered
     return _C.clone()
