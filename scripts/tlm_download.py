@@ -1,15 +1,15 @@
 import argparse
 import os
 import sys
-import urllib.request
 import zipfile
 from pathlib import Path
 from typing import Optional
+import requests
+from tqdm import tqdm
+from bs4 import BeautifulSoup
 
-
-TLM_GOOGLE_DRIVE_URL = "https://drive.usercontent.google.com/download?id=12qsQ_9ef7PeJ3WAOJz7szIa0Qbk0ItjZ&export=download&authuser=0"
+TLM_GOOGLE_DRIVE_URL = "https://drive.usercontent.google.com/download?id=12qsQ_9ef7PeJ3WAOJz7szIa0Qbk0ItjZ&export=download&authuser=0&confirm=t"
 TLM_FILENAME = "tlm_dataset.zip"
-
 
 def get_data_dir(data_dir_arg: Optional[str]) -> Path:
     """Get and validate the data directory from argument or environment variable."""
@@ -28,20 +28,125 @@ def get_data_dir(data_dir_arg: Optional[str]) -> Path:
     return data_dir
 
 
-def download_file(url: str, output_path: Path, force: bool = False) -> bool:
-    """Download a file from URL to output path."""
+def download_from_google(file_id: str, file_name: str, target: str = "."):
+    """
+    Downloads a file from Google Drive, handling potential confirmation tokens for large files.
+
+    Args:
+        file_id (str):
+            The ID of the file to download from Google Drive.
+        file_name (str):
+            The name to save the downloaded file as.
+        target (str, optional):
+            The directory to save the file in. Defaults to the current directory (".").
+
+    Raises:
+        Exception: If the download fails or the file cannot be created.
+
+    Notes:
+        This function handles both small and large files. For large files, it automatically processes
+        Google's confirmation token to bypass warnings about virus scans or file size limits.
+
+    Example:
+        Download a file to the current directory:
+            download_from_google(
+                file_id="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                file_name="example_file.txt"
+            )
+
+        Download a file to a specific directory:
+            download_from_google(
+                file_id="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                file_name="example_file.txt",
+                target="./downloads"
+            )
+    """
+    # First try: docs.google.com/uc?export=download&id=FileID
+    base_url = "https://docs.google.com/uc"
+    session = requests.Session()
+    params = {
+        "export": "download",
+        "id": file_id
+    }
+    response = session.get(base_url, params=params, stream=True)
+
+    # If Content-Disposition is present, the file is directly available
+    if "content-disposition" not in response.headers:
+        # Try to get the token from cookies
+        token = None
+        for k, v in response.cookies.items():
+            if k.startswith("download_warning"):
+                token = v
+                break
+
+        # If no token in cookies, extract it from the HTML
+        if not token:
+            soup = BeautifulSoup(response.text, "html.parser")
+            # Common case: HTML contains a form with id="download-form"
+            download_form = soup.find("form", {"id": "download-form"})
+            if download_form and download_form.get("action"):
+                # Extract action URL, which might be drive.usercontent.google.com/download
+                download_url = download_form["action"]
+                # Collect all hidden inputs
+                hidden_inputs = download_form.find_all("input", {"type": "hidden"})
+                form_params = {}
+                for inp in hidden_inputs:
+                    if inp.get("name") and inp.get("value") is not None:
+                        form_params[inp["name"]] = inp["value"]
+
+                # Re-send the GET request with these parameters
+                response = session.get(download_url, params=form_params, stream=True)
+            else:
+                # Otherwise, search for confirm=xxx in HTML
+                match = re.search(r'confirm=([0-9A-Za-z-_]+)', response.text)
+                if match:
+                    token = match.group(1)
+                    # Include the confirm token in the request
+                    params["confirm"] = token
+                    response = session.get(base_url, params=params, stream=True)
+                else:
+                    raise Exception("Unable to find the download link or confirmation token in the response. Download failed.")
+
+        else:
+            # Use the token obtained from cookies and resend the request
+            params["confirm"] = token
+            response = session.get(base_url, params=params, stream=True)
+
+    # Ensure the download directory exists
+    os.makedirs(target, exist_ok=True)
+    file_path = os.path.join(target, file_name)
+
+    # Start downloading the file in chunks, with a progress bar
+    try:
+        total_size = int(response.headers.get('content-length', 0))
+        with open(file_path, "wb") as f, tqdm(
+            desc=file_name,
+            total=total_size,
+            unit="B",
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as bar:
+            for chunk in response.iter_content(chunk_size=32768):
+                if chunk:
+                    f.write(chunk)
+                    bar.update(len(chunk))
+
+        print(f"File successfully downloaded to: {file_path}")
+
+    except Exception as e:
+        raise Exception(f"File download failed: {e}")
+
+
+def download_file(id_doc: str, output_path: Path, force: bool = False) -> bool:
+    """Download a file from Google Drive to output path."""
     if output_path.exists() and not force:
         print(f"Skipping {output_path.name} (already exists, use --force to re-download)")
         return False
     
     print(f"Downloading {output_path.name}...")
     try:
-        # Set user agent for Google Drive
-        opener = urllib.request.build_opener()
-        opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-        urllib.request.install_opener(opener)
-        
-        urllib.request.urlretrieve(url, output_path, reporthook=download_progress)
+        # download_file_from_google_drive(id_doc, output_path)
+        download_from_google(id_doc, str(output_path.name), str(output_path.parent))
         print(f"\nCompleted: {output_path.name}")
         return True
     except Exception as e:
@@ -49,17 +154,6 @@ def download_file(url: str, output_path: Path, force: bool = False) -> bool:
         if output_path.exists():
             output_path.unlink()
         raise
-
-
-def download_progress(block_num: int, block_size: int, total_size: int):
-    """Display download progress."""
-    downloaded = block_num * block_size
-    if total_size > 0:
-        percent = min(100, downloaded * 100 / total_size)
-        print(f"\rProgress: {percent:.1f}%", end="")
-    else:
-        # For Google Drive, total_size might be -1
-        print(f"\rDownloaded: {downloaded / (1024*1024):.1f} MB", end="")
 
 
 def unzip_file(zip_path: Path, extract_dir: Path, force: bool = False):
@@ -113,7 +207,10 @@ def main():
         output_path = tlm_dir / TLM_FILENAME
         
         # Download file
-        downloaded = download_file(TLM_GOOGLE_DRIVE_URL, output_path, args.force)
+        downloaded = download_file(
+            "12qsQ_9ef7PeJ3WAOJz7szIa0Qbk0ItjZ", 
+            output_path, 
+            args.force)
         
         # Unzip if requested
         if args.unzip:
