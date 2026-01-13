@@ -59,8 +59,8 @@ def init_tlm_config(_C, data_path, src_path):
     
     _C.TLM = CN()
     _C.TLM.N_CLASS = 14
-    _C.TLM.RGB_DIR = str(data_path / 'swisstopo' / 'SI_2020_50cm_100m')
-    _C.TLM.LABEL_DIR = str(data_path / 'contrastive-lc' / 'tlm_14cls_100m')
+    _C.TLM.RGB_DIR = str(data_path / "soleil_dataset" / "SI")
+    _C.TLM.LABEL_DIR = str(data_path / "soleil_dataset" / "tlm")
     _C.TLM.TEST_SPLIT_PATH = str(src_path / 'data' / 'tlm_split' / 'soleil_100m.csv')
     _C.TLM.TEST_PATCH_SIZE = 200
     _C.TLM.EMBEDDING_PATH = str(src_path / 'data' / 'tlm_labels' / 'tlm_labels_sbert.pt')
