@@ -1,67 +1,156 @@
-<h1 style="text-align: center;"> Modifications apportées, problèmes rencontrés</h1>
-<h2>Disclaimer</h2>
-Ce projet a pour but de corriger et de reprendre les travaux de Valérie Zermatten afin de les adapter au nouveau jeu de données FLAIR-HUB de l'IGN. Les modifications sont classées par types de modification et/ou problèmes rencontrés au fur et à mesure.
+<h1 style="text-align: center;"> :taco:  TACOSS : Learning transferable land cover semantics for open
+vocabulary interactions with remote sensing images.</h1>
 
-Vous trouverez ci-dessous la liste des modifications apportées au dépot git original [RS-OVSS](https://github.com/eceo-epfl/RS-OVSS). Pour plus d'information sur l'original, se référer au README dans le dossier documentation.
+<a href="https://orcid.org/0009-0008-1527-3913">Valerie Zermatten <img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /></a>,<a href="https://orcid.org/0000-0001-5607-4445"> Javiera Castillo-Navarro <img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /></a>,<a href="https://orcid.org/0000-0001-5607-4445"> Diego Marcos <img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /></a>,<a href="https://orcid.org/0000-0003-0374-2459"> Devis Tuia<img alt="ORCID logo" src="https://info.orcid.org/wp-content/uploads/2019/11/orcid_16x16.png" width="16" height="16" /></a>
 
-<h2>Données ajoutées</h2>
-<h3>Données FLAIR-HUB</h3>
-Les deux csv FLAIR et FLAIR-HUB possédant des formats différents nous avons adapté le code en conséquence dans la classe FLAIRDataset du fichier dataset.py:
+<h2>News</h2>
+Oct. 2025 : Added link to download the TLM Dataset and text labels.
 
-- ajout de la ligne 29 dans la fonction \_\_init__
-- ajouts et modifications des lignes 96 à 100 dans la fonction \_\_getitem__
+Feb. 2025 : :tada: :tada: :taco: TACOSS  was accepted for publication in **ISPRS Journal of Photogrammetry and Remote Sensing**
 
-(les tests ont pour l'instant été éffectué sur les données FLAIR-HUB TOY)
-
-Les données sont à télécharger sur [cette page](https://ignf.github.io/FLAIR/FLAIR-HUB/flairhub_fr.html).
-
-<h2>Chemins</h2>
-Les chemins sont à changer dans le fichier default.py.
-Si utilisation de CLIPSeg, il faut aussi changer les chemins dans ce répertoire-là
-
-<h2>Problèmes de drivers</h2>
-Afin de régler ce problème, il suffit de modifier dans default.py la ligne 79
-
-<h2>Problèmes de CPU avec Torch</h2>
-Pour assurer la compatibilité du code avec des environnement "cpu-only", quelques modifications ont été apportés dans les fichiers suivants:
-
-- main.py : ligne 263 
-- SegformerModel.py : lignes 9 et 36
-- DeepLabv3pModel.py : lignes 9 et 109 
+[![DOI:10.1016/j.isprsjprs.2025.01.006](https://zenodo.org/badge/DOI/10.1007/978-3-319-76207-4_15.svg)](https://doi.org/10.1016/j.isprsjprs.2025.01.006)
 
 
-<h2>Problèmes de fichiers innexistants</h2>
-De nombreux fichiers ne semblaient pas coincider avec les noms des fichiers lu dans le code: voici une liste des modifications de noms de fichiers apportés:
+How to cite the work : 
+```
+@article{ZERMATTEN2025621,
+title = {Learning transferable land cover semantics for open vocabulary interactions with remote sensing images},
+journal = {ISPRS Journal of Photogrammetry and Remote Sensing},
+volume = {220},
+pages = {621-636},
+year = {2025},
+issn = {0924-2716},
+doi = {https://doi.org/10.1016/j.isprsjprs.2025.01.006},
+author = {Valérie Zermatten and Javiera Castillo-Navarro and Diego Marcos and Devis Tuia},
+keywords = {Land cover mapping, Open vocabulary semantic segmentation, Vision-language model for remote sensing},
+}
+```
 
-- ajout des fichiers dlv-bcos_clip_des.yaml, dlv-bcos_clip_name.yaml et dlv-bcos_clip_syn.yaml afin de pouvoir effectuer les tests proposés dans le README.md du projet initial.
-- certains noms de fichiers ne correspondent également pas à ceux appelés dans des fichiers ou aux commandes partagées dans le readme. Les bonnes commandes sont les suivantes:
+<h2>Overview</h2>
+
+This repository proposes Text As supervision for COntrastive Semantic Segmentation (**TACOSS**), an open vocabulary semantic segmentation model for remote sensing images.
+TACOSS leverages the common sense knowledge captured by language models and is capable of interpreting the image at the pixel level, attributing semantics to each pixel and removing the constraints of a fixed set of land cover labels.
+
+This project intends to not only simplify the map creation process but also bridge the gap between complex remote sensing technology and user-friendly applications, eventually
+making advanced mapping tools accessible to everyone. 
+
+
+
+![Overview](resources/pipeline_v2.png)
+
+<h2>Code usage </h2>
+
+Interested in trying out? 
+
+First install the necessary dependencies and download the models/data. 
+
+<h3>Code requirements (installation) </h3>
+
+Required Python packages are listed in the requirements.yml which can be used to build a conda environment.
 
 ```
-# Train Segformer baseline model :
-python3 main.py --cfg segformer-base
-
-# Train DeepLabv3+ baseline model :
-python3 main.py --cfg dlv-base
-
-# Train TACOSS with the SegFormer visual backbone and the SentenceBERT text encoder : 
-python3 main.py --cfg segformer_bcos_sbert_des_eda 
-
-# Train TACOSS with the DeepLabv3+ backbone and CLIP text encoder :
-python3 main.py --cfg dlv-bcos_clip_name
-
+conda env create --file environment.yml
+conda activate tacoss
 ```
-<h2>Tests sans entraînement</h2>
-Pour lancer des tests sans entraînement, une fonction config a été ajouté au fichier main.py
 
-<h2>Rappels utiles</h2>
-<h3>Commandes</h3>
-Il est possible de choisir soit même les configurations que l'on souhaite tester et entrainer avec la commande:
+Or  use the provided "Dockerfile"
 
+<h3>Data requirements</h3>
+
+For trying out the TACOSS, please download the model weights and embeddings available in Zenodo: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13361624.svg)](https://doi.org/10.5281/zenodo.13361624).
+
+First, clone this repository, then copy the model weights files in the folder `/output`, and the labels embeddings in the folder `/data`
+
+- The  FLAIR  dataset is available on the IGN website  [ FLAIR challenge](https://ignf.github.io/FLAIR/#FLAIR1).
+
+- The TLM aerial images can be downloaded from the [swissIMAGE 10cm website ](https://www.swisstopo.admin.ch/de/orthobilder-swissimage-10-cm)
+
+- The TLM annotations can be downloaded as shapefile 'BodenBeckdung' on the [swissTLM3d website](https://www.swisstopo.admin.ch/de/landschaftsmodell-swisstlm3d)
+    - The TLM dataset as used in this repository can be downloaded here : [TLM dataset drive](https://drive.google.com/file/d/12qsQ_9ef7PeJ3WAOJz7szIa0Qbk0ItjZ/view?usp=sharing) or by contacting the authors. 
+    - The TLM dataset legend for the labels are available here : [TLM dataset text labels ](resources/TLM_Dataset_labels.txt)  [TLM dataset text description ](resources/TLM_Dataset_description.txt)..
+    
+
+
+
+
+<h3>Model training</h3>
+
+
+Several configuration files are provided in the `config` folder. 
+To launch  experiments based on the existing configuration files, use the following command line :
 ```
 python main.py --cfg <config_name>
+
+# Train Segformer baseline model :
+python main.py --cfg segformer-base
+
+# Train DeepLabv3+ baseline model :
+python main.py --cfg dlv-base
+
+# Train TACOSS with the SegFormer visual backbone and the SentenceBERT text encoder : 
+python main.py --cfg segformer-bcos-sbert-des-eda
+
+# Train TACOSS with the DeepLabv3+ backbone and CLIP text encoder :
+python main.py --cfg dlv-bcos-clip-name
 ```
 
+Experiments with the CLIPSeg model require a specific dataset class for its training and inference since CLIPSeg is trained as a binary segmentation task with a binary cross-entropy loss. To train and evaluate CLIPSeg, use the `CLIPSeg` folder and the `CLIPSegFinetune.py` script.
 
-<h3>Lancement du projet</h3>
-Il est possible de lancer les tests sans anaconda ni docker (bien que l'utilisation de l'un des deux soit conseillée). Pour cela, une commande bash a été ajouté pour l'import des librairies python : req.sh
 
+<h2>Results</h2>
+
+Qualitative performance of TACOSS on the FLAIR dataset : 
+
+
+![interactions](resources/megafigure.png)
+
+
+Qualitative performance of TACOSS on the TLM dataset (in a transfert setting ) : 
+<figcaption>Fig. 1 : Aerial view :</figcaption>
+<img src="resources/TLM_soleil_image.png" width="700" alt="AerialView">
+
+<figcaption>Fig. 2 : TLM labels :</figcaption>
+<img src="resources/XTLM_soleil_labels.png" width="700" alt="Labels">
+
+<figcaption>Fig. 3: TACOSS predictions:</figcaption>
+<img src="resources/TLM_soleil_preds.png" width="700" alt="Predictions">
+
+<img src="resources/TLM_soleil_legend.png" width="400" />
+
+    
+
+
+More examples can be found in the associated publication.
+
+
+
+
+<h2>Future directions</h2>
+
+This project proposes the development of remote sensing-specific vision-language models to facilitate interactions with RS images. Our work showed a proof of principle.
+
+In principle, to be more usable, TACOSS  requires multiple improvements:
+- Extend TACOSS to more geographical regions, sensors and spatial resolution. Currently, the model is trained only on high-resolution (30cm) images with RGB bands.
+- Improve fine-tuning of TACOSS from a few land cover labels to a larger set of labels and a more diverse description of land cover.
+- Improve open-vocabulary capabilities of TACOSS.
+
+
+<h2>Contributing</h2>
+
+If you are interested in contributing to one of the aforementioned points or working on a similar project and wish to collaborate, please reach out to [ECEO](https://www.epfl.ch/labs/eceo).
+
+For code-related contributions, suggestions or inquiries, please open a GitHub issue. 
+
+
+
+<h2>Code acknowledgments</h2>
+
+We acknowledge the following code repositories that helped to build the TACOSS repository :  
+
+- https://github.com/amathislab/wildclip
+
+- https://github.com/hugoporta/segmentation-prototype/
+
+
+
+Thank you! Other smaller sources are mentioned in the relevant code sections. 
