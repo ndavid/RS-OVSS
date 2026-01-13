@@ -79,6 +79,37 @@ def unzip_file(zip_path: Path, extract_dir: Path, force: bool = False):
         raise
 
 
+def filter_urls(urls: list, only_labels: bool, only_test: bool, only_toy: bool) -> list:
+    """Filter URLs based on specified options."""
+    if only_toy:
+        return [url for url in urls if "toy_dataset" in url]
+    
+    filtered_urls = []
+    
+    for url in urls:
+        # Skip toy dataset unless specifically requested
+        if "toy_dataset" in url:
+            continue
+            
+        # Filter by labels
+        if only_labels and "labels" not in url:
+            continue
+        # if not only_labels and only_test is False and "labels" in url:
+        #     # If not specifically asking for labels and not asking for test, skip labels
+        #     pass
+        
+        # Filter by test/train
+        if only_test and "test" not in url:
+            continue
+        # if not only_test and not only_labels and "test" in url:
+        #     # If not asking for test specifically, skip test files (except when asking for labels)
+        #     continue
+            
+        filtered_urls.append(url)
+    
+    return filtered_urls
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Download FLAIR 1 dataset for TACOSS"
@@ -99,6 +130,21 @@ def main():
         action="store_true",
         help="Force re-download and re-unzip even if files already exist"
     )
+    parser.add_argument(
+        "--only_labels",
+        action="store_true",
+        help="Download only label files"
+    )
+    parser.add_argument(
+        "--only_test",
+        action="store_true",
+        help="Download only test files"
+    )
+    parser.add_argument(
+        "--only_toy",
+        action="store_true",
+        help="Download only toy dataset"
+    )
     
     args = parser.parse_args()
     
@@ -109,7 +155,16 @@ def main():
         flair_dir = data_dir / "flair_1"
         flair_dir.mkdir(parents=True, exist_ok=True)
         
-        for url in FLAIR_1_URLS:
+        # Filter URLs based on arguments
+        urls_to_download = filter_urls(FLAIR_1_URLS, args.only_labels, args.only_test, args.only_toy)
+        
+        if not urls_to_download:
+            print("No files match the specified criteria.")
+            return
+        
+        print(f"Will download {len(urls_to_download)} file(s)")
+        
+        for url in urls_to_download:
             filename = url.split("/")[-1]
             output_path = flair_dir / filename
             
