@@ -153,7 +153,7 @@ def main():
                     if file_type == 'labels':
                         extract_dir = src_dir / 'data'
                     elif file_type == 'weights':
-                        extract_dir = src_dir / 'output'
+                        extract_dir = src_dir 
                     else:
                         extract_dir = tacoss_dir
                     

@@ -117,8 +117,8 @@ def main():
         
         # Unzip if requested
         if args.unzip:
-            if downloaded or args.force:
-                unzip_file(output_path, tlm_dir, args.force)
+            # if downloaded or args.force:
+            unzip_file(output_path, tlm_dir, args.force)
         
         print("\nDownload completed successfully!")
         print(f"File saved to: {tlm_dir}")
